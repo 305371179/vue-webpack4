@@ -2,7 +2,7 @@
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
 import App from './App'
-require('../static/iconfont.css')
+// require('../static/iconfont.css')
 Vue.config.productionTip = false
 
 /* eslint-disable no-new */

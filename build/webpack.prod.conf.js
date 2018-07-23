@@ -10,10 +10,13 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const OptimizeCSSPlugin = require('optimize-css-assets-webpack-plugin')
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
+var safe   = require('postcss-safe-parser')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 
 const env = require('../config/prod.env')
 
 const webpackConfig = merge(baseWebpackConfig, {
+  mode:'production',
   module: {
     rules: utils.styleLoaders({
       sourceMap: config.build.productionSourceMap,
@@ -32,30 +35,53 @@ const webpackConfig = merge(baseWebpackConfig, {
     new webpack.DefinePlugin({
       'process.env': env
     }),
-    new UglifyJsPlugin({
-      uglifyOptions: {
-        compress: {
-          warnings: false
-        }
-      },
-      sourceMap: config.build.productionSourceMap,
-      parallel: true
-    }),
+    // new UglifyJsPlugin({
+    //   uglifyOptions: {
+    //     compress: {
+    //       warnings: false
+    //     }
+    //   },
+    //   sourceMap: config.build.productionSourceMap,
+    //   parallel: true
+    // }),
     // extract css into its own file
     new ExtractTextPlugin({
-      filename: utils.assetsPath('css/[name].[contenthash].css'),
+      filename: utils.assetsPath('css/[name].[md5:contenthash].css'),//utils.assetsPath('css/[name].[contenthash].css'),
+
       // Setting the following option to `false` will not extract CSS from codesplit chunks.
       // Their CSS will instead be inserted dynamically with style-loader when the codesplit chunk has been loaded by webpack.
       // It's currently set to `true` because we are seeing that sourcemaps are included in the codesplit bundle as well when it's `false`,
       // increasing file size: https://github.com/vuejs-templates/webpack/issues/1110
       allChunks: true,
     }),
+    // extract css into its own file
+    // new MiniCssExtractPlugin({
+    //   // Options similar to the same options in webpackOptions.output
+    //   // both options are optional
+    //   filename: 'css/[name].css',
+    //   chunkFilename: 'css/[id].css'
+    // }),
+    // // Compress extracted CSS. We are using this plugin so that possible
+    // // duplicated CSS from different components can be deduped.
+    // ...(config.build.productionSourceMap
+    //     ? []
+    //     : [new OptimizeCSSPlugin({
+    //       cssProcessorOptions: {
+    //         safe: true,
+    //         map: false,
+    //       }
+    //     })]
+    // ),
     // Compress extracted CSS. We are using this plugin so that possible
     // duplicated CSS from different components can be deduped.
     new OptimizeCSSPlugin({
       cssProcessorOptions: config.build.productionSourceMap
-        ? { safe: true, map: { inline: false } }
-        : { safe: true }
+        ? { parser:safe, map: {
+            inline: false ,
+            annotation: true//是否增加/*# sourceMappingURL=app.1bf55b01a6d7fab5a94fbcdb52a19e8c.css.map */
+        }
+      }
+        : { parser:safe }
     }),
     // generate dist index.html with correct asset hash for caching.
     // you can customize output by editing /index.html
@@ -78,7 +104,7 @@ const webpackConfig = merge(baseWebpackConfig, {
     new webpack.HashedModuleIdsPlugin(),
     // enable scope hoisting
     new webpack.optimize.ModuleConcatenationPlugin(),
-    // split vendor js into its own file
+    /*// split vendor js into its own file
     new webpack.optimize.CommonsChunkPlugin({
       name: 'vendor',
       minChunks (module) {
@@ -106,7 +132,7 @@ const webpackConfig = merge(baseWebpackConfig, {
       async: 'vendor-async',
       children: true,
       minChunks: 3
-    }),
+    }),*/
 
     // copy custom static assets
     new CopyWebpackPlugin([
@@ -116,7 +142,41 @@ const webpackConfig = merge(baseWebpackConfig, {
         ignore: ['.*']
       }
     ])
-  ]
+  ],
+  optimization: {
+    runtimeChunk: {
+      name: 'manifest'
+    },
+    minimize: true,
+    noEmitOnErrors: true,
+    splitChunks: {
+      chunks: 'async', // 必须三选一： "initial" | "all" | "async"
+      minSize: 30000, // 最小尺寸
+      minChunks: 2, //must be greater than or equal 2. The minimum number of chunks which need to contain a module before it's moved into the commons chunk.
+      maxAsyncRequests: 5, // 最大异步请求数
+      maxInitialRequests: 3, // 最大初始化请求书
+      name: true, // 名称，此选项可接收 function
+      cacheGroups: {
+        vendor: { // key 为entry中定义的 入口名称
+          name: 'vendor', // 要缓存的 分隔出来的 chunk 名称
+          chunks: 'all', //all-异步加载快，但初始下载量较大，文件共用性好； initial-初始下载量较小，但异步加载量较大，文件间有重复内容
+          priority: -10,
+          reuseExistingChunk: false, // 选项用于配置在模块完全匹配时重用已有的块，而不是创建新块
+          test: /node_modules[\\/]/
+        },
+        aliOss: {
+          name: 'ali-oss',
+          priority: 10,
+          test: /ali\-oss/,
+        },
+        // common: {
+        //     name: 'common',
+        //     priority: 11,
+        //     test: /assets/,
+        // },
+      }
+    }
+  }
 })
 
 if (config.build.productionGzip) {
