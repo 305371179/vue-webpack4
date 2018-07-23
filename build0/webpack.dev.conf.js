@@ -9,10 +9,10 @@ const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const FriendlyErrorsPlugin = require('friendly-errors-webpack-plugin')
 const portfinder = require('portfinder')
-const apiMocker = require('webpack-api-mocker')
+
 const HOST = process.env.HOST
 const PORT = process.env.PORT && Number(process.env.PORT)
-const serve = require("../build/dev-server").serve;
+
 const devWebpackConfig = merge(baseWebpackConfig, {
   mode:'development',
   module: {
@@ -26,11 +26,8 @@ const devWebpackConfig = merge(baseWebpackConfig, {
     clientLogLevel: 'warning',
     historyApiFallback: {
       rewrites: [
-        // { from: /.*/, to: path.posix.join(config.dev.assetsPublicPath, 'index.html') },
+        { from: /.*/, to: path.posix.join(config.dev.assetsPublicPath, 'index.html') },
       ],
-    },
-    setup(app){
-      serve(app)
     },
     hot: true,
     contentBase: false, // since we use CopyWebpackPlugin.

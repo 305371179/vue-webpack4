@@ -90,6 +90,9 @@ export default {
     return {
       msg: 'Welcome to Your Vue.js App'
     }
+  },
+  mounted(){
+    $('body').css('background-color','red')
   }
 }
 </script>
